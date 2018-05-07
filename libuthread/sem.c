@@ -8,7 +8,7 @@
 
 struct semaphore {
 	/* TODO: Phase 1 */
-  size_t sem_count;
+  size_t count;
 };
 
 sem_t sem_create(size_t count)
@@ -20,7 +20,7 @@ sem_t sem_create(size_t count)
     return NULL;
   }
 
-  new_semaphore->sem_count = count;
+  new_semaphore->count = count;
   return new_semaphore;
     
 }
@@ -52,5 +52,5 @@ int sem_up(sem_t sem)
 
 size_t get_sem_count(sem_t sem)
 {
-  return sem->sem_count;
+  return sem->count;
 }
