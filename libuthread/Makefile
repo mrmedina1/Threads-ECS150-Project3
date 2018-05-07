@@ -13,7 +13,8 @@ $(lib): $(objs)
 sem.o: sem.c sem.h
 	gcc $(CFLAGS) -c -o sem.o sem.c
 
-clean: rm -rf $(objs) $(lib)
+clean: 
+	rm -rf $(objs) $(lib)
 
 
 ## TODO: Phase 1 and Phase 2
