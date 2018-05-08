@@ -3,7 +3,7 @@ lib := libuthread.a
 
 all: $(lib)
 
-objs := sem.o
+objs := sem.o queue.o 
 
 CFLAGS := -Wall -Werror
 
@@ -12,6 +12,9 @@ $(lib): $(objs)
 
 sem.o: sem.c sem.h
 	gcc $(CFLAGS) -c -o sem.o sem.c
+
+queue.o: queue.c queue.h
+	gcc $(CFLAGS) -c -o queue.o queue.c
 
 clean: 
 	rm -rf $(objs) $(lib)

@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 	t.sem1 = sem_create(0);
 	t.sem2 = sem_create(0);
   
-//  printf("sem_size: %zu\n", get_sem_count(t.sem1));
+  printf("sem_size: %zu\n", get_sem_count(t.sem1));
 	pthread_create(&tid[0], NULL, thread1, &t);
 	pthread_create(&tid[1], NULL, thread2, &t);
 
