@@ -14,8 +14,33 @@
 
 /* TODO: Phase 2 */
 
+struct TPS
+{
+  pthread_t TID;
+//  struct page *page_ptr;
+};
+
+/*struct page
+{
+  void* start_ptr;
+  int count;
+};*/
+
+struct TPS_STORE
+{
+  queue_t TPS_queue;
+};
+
+struct TPS_STORE *TPS_store = 0;
+
 int tps_init(int segv)
 {
+  if (TPS_store != 0) { return -1; }
+  else
+  {
+    TPS_store = malloc(sizeof(struct TPS_STORE));
+    TPS_store->TPS_queue = queue_create();   
+  }
 	/* TODO: Phase 2 */
   return 1;
 }
@@ -23,6 +48,11 @@ int tps_init(int segv)
 int tps_create(void)
 {
 	/* TODO: Phase 2 */
+  struct TPS *new_tps = malloc(sizeof(struct TPS));
+  if (new_tps == NULL) { return -1; }
+  
+  new_tps->TID = pthread_self();
+   
   return 1;
 }
 

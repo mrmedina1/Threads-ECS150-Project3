@@ -63,7 +63,6 @@ int sem_down(sem_t sem)
 
 int sem_up(sem_t sem)
 {
-/* TODO: Phase 1 */
   if (sem == NULL)
   {
     return -1;
@@ -84,6 +83,7 @@ int sem_up(sem_t sem)
     thread_unblock(tid_to_unblock);
   }
   exit_critical_section();
+	/* TODO: Phase 1 */
   return 0;
 }
 
