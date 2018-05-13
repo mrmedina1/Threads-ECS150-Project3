@@ -34,7 +34,7 @@ struct TPS_STORE
 struct TPS_STORE *TPS_store = 0;
 
 //Iterator function to search for TPS
-int search_TPS(void *data, void *arg)
+int tpsSearch(void *data, void *arg)
 {
 	struct TPS *a = (struct TPS*)data;
 	pthread_t match = (pthread_t)arg;
@@ -64,11 +64,11 @@ int tps_create(void)
 	if (new_tps == NULL) { return -1; }
 	
 	new_tps -> TID = pthread_self();
-	struct TPS *found_tps = NULL;
+	struct TPS *tps_found = NULL;
 	
-	//Search for TPS using queue_iterate and search_TPS iterator function
-	queue_iterate(TPS_store -> TPS_queue, search_TPS, (void*)new_tps -> TID, (void**)&found_tps);
-	if(found_tps != NULL){ return -1; }
+	//Search for TPS using queue_iterate and tpsSearch iterator function
+	queue_iterate(TPS_store -> TPS_queue, tpsSearch, (void*)new_tps -> TID, (void**)&tps_found);
+	if(tps_found != NULL){ return -1; }
 	
 	new_tps -> memPage_ptr = (struct memPage*)malloc(sizeof(struct memPage));
 	if (new_tps -> memPage_ptr == NULL) { return -1; }
@@ -88,13 +88,31 @@ int tps_create(void)
 int tps_destroy(void)
 {
 	/* TODO: Phase 2 */
-  return 0;
+	struct TPS *tps_found = NULL;
+	pthread_t tid = (pthread_t)pthread_self();
+	queue_iterate(TPS_store -> TPS_queue, tpsSearch, (void*)tid, (void**)&tps_found);
+	if(tps_found == NULL){ return -1; }
+	
+	assert(queue_delete(TPS_store -> TPS_queue, tps_found) != -1);
+	
+	return 0;
 }
 
 int tps_read(size_t offset, size_t length, char *buffer)
 {
 	/* TODO: Phase 2 */
-  return 0;
+	int outOfBounds = (length + offset);
+	
+	struct TPS *tps_found = NULL;
+	pthread_t tid = (pthread_t)pthread_self();
+	queue_iterate(TPS_store -> TPS_queue, tpsSearch, (void*)tid, (void**)&tps_found);
+	if(tps_found == NULL || outOfBounds > TPS_SIZE || buffer == NULL){ return -1; }
+	
+	memcpy(buffer, tps_found->memPage_ptr->start_ptr + offset, length);
+	
+	assert(strcmp(tps_found->memPage_ptr->start_ptr + offset, buffer) == 0);
+	
+	return 0;
 }
 
 int tps_write(size_t offset, size_t length, char *buffer)
