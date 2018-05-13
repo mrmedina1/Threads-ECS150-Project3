@@ -22,7 +22,7 @@ struct TPS
 
 struct memPage
 {
-	int count;
+	int count;	//Used to keep track of memory pages, needed in write function
 	void* start_ptr;
 };
 
@@ -108,8 +108,10 @@ int tps_read(size_t offset, size_t length, char *buffer)
 	queue_iterate(TPS_store -> TPS_queue, tpsSearch, (void*)tid, (void**)&tps_found);
 	if(tps_found == NULL || outOfBounds > TPS_SIZE || buffer == NULL){ return -1; }
 	
+	//Copy data
 	memcpy(buffer, tps_found->memPage_ptr->start_ptr + offset, length);
 	
+	//Assert data copy was successful
 	assert(strcmp(tps_found->memPage_ptr->start_ptr + offset, buffer) == 0);
 	
 	return 0;
@@ -118,12 +120,54 @@ int tps_read(size_t offset, size_t length, char *buffer)
 int tps_write(size_t offset, size_t length, char *buffer)
 {
 	/* TODO: Phase 2 */
-  return 0;
+	int outOfBounds = (length + offset);
+	
+	struct TPS *tps_found = NULL;
+	pthread_t tid = (pthread_t)pthread_self();
+	queue_iterate(TPS_store -> TPS_queue, tpsSearch, (void*)tid, (void**)&tps_found);
+	if(tps_found == NULL || outOfBounds > TPS_SIZE || buffer == NULL){ return -1; }
+
+	if(tps_found -> memPage_ptr -> count > 1)
+	{
+		struct memPage *new_memPage = (struct memPage*)malloc(sizeof(struct memPage));
+		tps_found -> memPage_ptr -> count -= 1;
+		new_memPage -> start_ptr =  mmap(NULL, TPS_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, 0, 0);
+		
+		memcpy(new_memPage -> start_ptr, tps_found -> memPage_ptr -> start_ptr, TPS_SIZE);
+		
+		tps_found -> memPage_ptr = new_memPage;
+		tps_found -> memPage_ptr -> count = 1;
+	}
+
+	return 0;
 }
 
+//Handles ptr redirection
 int tps_clone(pthread_t tid)
 {
 	/* TODO: Phase 2 */
-  return 0;
-}
+	struct TPS *tps_found = NULL;
+	queue_iterate(TPS_store -> TPS_queue, tpsSearch, (void*)tid, (void**)&tps_found);
+	
+	struct TPS *tps_current_found = NULL;
+	pthread_t tid_current = (pthread_t)pthread_self();
+	queue_iterate(TPS_store -> TPS_queue, tpsSearch, (void*)tid_current, (void**)&tps_current_found);
+	
+	if(tps_found == NULL || tps_current_found != NULL){ return -1; }
+	
+	struct TPS *cloned_tps = (struct TPS*)malloc(sizeof(struct TPS));
+	if(cloned_tps == NULL){ return -1; }
+	
+	//Clone the TPS.  memPage pointer is reassigned
+	cloned_tps -> memPage_ptr = (struct memPage*)malloc(sizeof(struct memPage));
+	cloned_tps -> TID = tid_current;
+	cloned_tps -> memPage_ptr = tps_found -> memPage_ptr;
+	
+	//Increment memory page counter
+	tps_found -> memPage_ptr -> count += 1;
+	
+	//Enqueue cloned TPS
+	queue_enqueue(TPS_store -> TPS_queue, cloned_tps);
 
+	return 0;
+}
