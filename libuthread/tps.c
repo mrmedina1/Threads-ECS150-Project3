@@ -44,6 +44,34 @@ int tpsSearch(void *data, void *arg)
 	return 0;
 }
 
+int pageAddressSearch(void *data, void *arg)
+{
+  struct TPS *a = (struct TPS*)data;
+  void* match = (void*) arg;
+  if (a->memPage_ptr->start_ptr == match)
+    return 1;
+  return 0;
+}
+
+static void segv_handler(int sig, siginfo_t *si, void *context)
+{
+  void *p_fault = (void*)((uintptr_t)si->si_addr & ~(TPS_SIZE - 1));
+	
+	void *found = NULL;
+  queue_iterate(TPS_store->TPS_queue, pageAddressSearch, p_fault, (void**)&found);
+    
+  if (found != NULL)
+  {
+    fprintf(stderr, "TPS protection error! \n");
+  }
+  
+  signal(SIGSEGV, SIG_DFL);
+  signal(SIGBUS, SIG_DFL);
+
+  raise(sig);
+
+}
+
 //Initalizes TPS queue
 int tps_init(int segv)
 {
@@ -54,8 +82,19 @@ int tps_init(int segv)
 		TPS_store -> TPS_queue = queue_create();   
 	}
 	/* TODO: Phase 2 */
+  if (segv) 
+  {
+    struct sigaction sa;
+  
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = segv_handler;
+    sigaction(SIGBUS, &sa, NULL);
+    sigaction(SIGSEGV, &sa, NULL);
+  }
 	return 0;
 }
+
 
 int tps_create(void)
 {
