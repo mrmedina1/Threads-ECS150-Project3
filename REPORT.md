@@ -165,6 +165,10 @@ the cloned TPS.
 	destroying.  Ensures successful data copying via assert's.
 
 * **tps_testsuite.c**:
+	Inside my_thread function runs test cases for tps_create(), a write and 
+	read of a tps to test if both are equal, a normal offset value, an offset 
+	with a value near 4096 like 4000 (edge offset), an invalid offset value like 10000000, 
+	an invalid buffer of NULL, and tps_destroy()
 
 ##### Makefile
 * Our Makefile generates a static library archive named **'libuthread.a'** when 
