@@ -93,7 +93,7 @@ void *my_another_thread(void* arg)
 
 void *my_thread(void* arg)
 {
-    // test_tps_create();
+    test_tps_create();
     printf("\nPass: test_tps_create\n");
     tps_create();
 
