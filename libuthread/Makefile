@@ -21,6 +21,3 @@ tps.o: tps.c tps.h
 
 clean: 
 	rm -rf $(objs) $(lib)
-
-
-## TODO: Phase 1 and Phase 2
