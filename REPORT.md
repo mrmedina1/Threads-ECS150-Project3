@@ -39,7 +39,7 @@ While the semaphore resource count is 0, the thread is enqueued and
 blocked.  The critical section for sem_down can be seen in the following code 
 block.
 
-	```c
+```c
 	//Crititcal section for sem_down
 	enter_critical_section();
 	while (sem->count == 0)
@@ -49,7 +49,7 @@ block.
 	}  
 	sem->count -= 1;
 	exit_critical_section();
-	```
+```
 
 ```sem_up(sem_t sem)``` releases a resource from semaphore sem
 
@@ -58,7 +58,7 @@ If there are resources in the queue then dequeue the thread and unblock it.
 The critical section for sem_up can be seen in the following code 
 block:
 
-	```c
+```c
 	//Crititcal section for sem_up
 	enter_critical_section();
 	if (sem->count != 0)
@@ -75,7 +75,7 @@ block:
 		thread_unblock(tid_to_unblock);
 	}
 	exit_critical_section();
-	```
+```
 	
 ```get_sem_count(sem_t sem)``` returns the semaphore resource count of sem
 
@@ -91,6 +91,10 @@ information.  It holds a starting page pointer and a count that keeps track of
 how many memory pages there are.  The ```TPS _STORE``` contains the 
 ```TPS_queue``` that is used to store the various TPS's.
 
+Iterator functions are used to find the TPS within the TPS queue, and also to 
+find the address of the memory page being searched.  They are used via queue 
+iterate throughout some of the following functions:
+
 ```tps_init(int segv)``` Initializes the TPS queue and checks on two types of 
 seg faults, both SIGSEGV and SIGBUS.  This is useful to know whether you had an 
 actual segmentation fault, or a seg fault caused by trying to access a protected 
@@ -101,7 +105,7 @@ created and enqueues it into the TPS queue.  The first page to the new TPS is
 created using a mapped pages memory (mmap) with the PROT_NONE flag which 
 reserves a region of address space for future use.
 
-```tps_destroy(void)``` 
+```tps_destroy(void)```  d
 
 ```tps_read(size_t offset, size_t length, char *buffer)``` Reads a specified 
 length of bytes from from current thread's TPS starting at the offset and stores 
@@ -113,38 +117,76 @@ buffer, then the memory protections are set back to PROT_NONE to protect the
 region of address space from unwanted access.  The code for this can be seen as 
 follows: 
 	
-	```c
+```c
 	//Change protection permissions before and after copying
 	mprotect(tps_found->memPage_ptr->start_ptr, TPS_SIZE, PROT_READ);
 	memcpy(buffer, tps_found->memPage_ptr->start_ptr + offset, length);
 	mprotect(tps_found->memPage_ptr->start_ptr, TPS_SIZE, PROT_NONE);
-	```
+```
+
+```tps_write(size_t offset, size_t length, char *buffer)``` Writes a specified 
+length of bytes from from current thread's TPS starting at the offset and stores 
+it into the data buffer.  Returns errors for out of bounds indexing, an empty 
+buffer, or if the TPS to read from is not found in the TPS queue.
+
+Memory protections are set to PROT_WRITE before the memory is copied to the 
+memory page, then the memory protections are set back to PROT_NONE to protect 
+the region of address space from unwanted access.  The code for this can be seen 
+as follows: 
+	
+```c
+	//Change protection permissions before and after copying
+	mprotect(tps_found->memPage_ptr->start_ptr, TPS_SIZE, PROT_WRITE);
+	memcpy(tps_found->memPage_ptr->start_ptr + offset, buffer, length);
+	mprotect(tps_found->memPage_ptr->start_ptr, TPS_SIZE, PROT_NONE);
+```
+
+```tps_clone(pthread_t tid)``` Clones TPS of paraemeter tid.  The tid is copied 
+to the cloned TPS tid, and the same memory page pointer is also referred to for 
+the cloned TPS. 
 
 ##### Testing
 
-sem_count.c
+* **sem_count.c**:
+	Provides simple testing for semaphore creation, joining, and destroying.  
+	Ensures there is no dead lock between synchronization of 2 threads.  
+	If synchronization is good, the output produced is numbers 0 through 19, 
+	one thread at a time.
 
-sem_buffer.c
+* **sem_buffer.c**:
+	Provides simple producer/consumer testing via a shared buffer with 
+	synchronization between two semaphores.
 
-sem_prime.c
+* **sem_prime.c**:
+	Provides testing for producer/consumer threads that interact via a pipeline.
 
-tps.c
+* **tps.c**:
+	Tests thread synchronization as well as TPS creation, reading, writing, and 
+	destroying.  Ensures successful data copying via assert's.
 
-##### Sub Report 4
-
-##### Sub Report 5
+* **tps_testsuite.c**:
 
 ##### Makefile
+* Our Makefile generates a static library archive named **'libuthread.a'** when 
+*'make'* is called from the test directory.
+
+It compiles and links all files from the libuthread directory into the library 
+and generates executables in the test directory that are from all of the .c 
+files within the test directory.
+
+Use *'make clean'* to return the test and libuthread directory to original 
+state.  This includes removing all .o, .x, and .a files.
+
+* Executables produced:
+	1. **sem_count.x**
+	2. **sem_buffer.x**
+	3. **sem_prime.x**
+	4. **tps.x**
+	5. **tps_testsuite.x**
 
 ### Limitations
 
 * Has only been compiled through GCC.
 
 ### Sources
-* Source1
-
-http://google.com
-
-* Source2
-
-http://google.com
+* Lecture and office hours
